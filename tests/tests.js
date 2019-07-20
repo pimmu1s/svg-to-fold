@@ -1,9 +1,13 @@
 const fs = require("fs");
 const foldify = require("../foldify");
 
-const sync_tests = [];
+const outputDir = "./tests/output";
+fs.existsSync(outputDir) || fs.mkdirSync(outputDir);
 
 const filenames = Array.from(Array(5)).map((_, i) => `test-0${i + 1}`);
+
+const sync_tests = [];
+
 // filenames.push("crane-attr");
 
 // test properties of each of the test file's fold objects
