@@ -3,9 +3,17 @@ import math from "../include/math";
 // import {
 //   remove_vertices,
 //   remove_edges,
-//   remove_faces,
+//   remove_faces
 // } from "./remove";
-
+const point_on_edge_exclusive = function (point, edge0, edge1, epsilon = math.core.EPSILON) {
+  const edge0_1 = [edge0[0] - edge1[0], edge0[1] - edge1[1]];
+  const edge0_p = [edge0[0] - point[0], edge0[1] - point[1]];
+  const edge1_p = [edge1[0] - point[0], edge1[1] - point[1]];
+  const dEdge = Math.sqrt(edge0_1[0] * edge0_1[0] + edge0_1[1] * edge0_1[1]);
+  const dP0 = Math.sqrt(edge0_p[0] * edge0_p[0] + edge0_p[1] * edge0_p[1]);
+  const dP1 = Math.sqrt(edge1_p[0] * edge1_p[0] + edge1_p[1] * edge1_p[1]);
+  return Math.abs(dEdge - dP0 - dP1) < epsilon;
+};
 
 /**
  * provide arrays as arguments, this will filter out anything undefined
@@ -22,20 +30,20 @@ const max_array_length = function (...arrays) {
  * @returns {number} number of geometry elements
  */
 const vertices_count = function ({
-  vertices_coords, vertices_faces, vertices_vertices,
+  vertices_coords, vertices_faces, vertices_vertices
 }) {
   return max_array_length([], vertices_coords,
     vertices_faces, vertices_vertices);
 };
 
 const edges_count = function ({
-  edges_vertices, edges_faces,
+  edges_vertices, edges_faces
 }) {
   return max_array_length([], edges_vertices, edges_faces);
 };
 
 const faces_count = function ({
-  faces_vertices, faces_edges,
+  faces_vertices, faces_edges
 }) {
   return max_array_length([], faces_vertices, faces_edges);
 };
@@ -43,7 +51,7 @@ const faces_count = function ({
 const get_geometry_length = {
   vertices: vertices_count,
   edges: edges_count,
-  faces: faces_count,
+  faces: faces_count
 };
 
 /**
@@ -142,11 +150,11 @@ const make_edges_intersections = function ({ vertices_coords, edges_vertices }) 
     for (let j = i + 1; j < edges.length; j += 1) {
       crossings[i][j] = math.core.intersection.edge_edge_exclusive(
         edges[i][0], edges[i][1],
-        edges[j][0], edges[j][1],
+        edges[j][0], edges[j][1]
       );
     }
   }
-  // build an list for each edge containing the intersection points
+  // build a list for each edge containing the intersection points
   //
   // 0 [ [0.25, 0.125] ]
   // 1 [ [0.25, 0.125], [0.99, 0.88] ]
@@ -176,6 +184,15 @@ const make_edges_intersections = function ({ vertices_coords, edges_vertices }) 
   // }
 };
 
+const make_edges_collinearVertices = function ({
+  vertices_coords, edges_vertices
+}, epsilon = math.core.EPSILON) {
+  const edges = edges_vertices
+    .map(ev => ev.map(v => vertices_coords[v]));
+  return edges.map(e => vertices_coords
+    .filter(v => point_on_edge_exclusive(v, e[0], e[1], epsilon)));
+};
+
 /**
  * fragment splits overlapping edges at their intersections
  * and joins new edges at a new shared vertex.
@@ -202,14 +219,23 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   // for each edge, get all the intersection points
   const edges_intersections = make_edges_intersections(graph);
 
-  edges_intersections.forEach((e, i) => e
+  // this does 2 very important things
+  // 1) gather all the intersection points (that don't count as crossings)
+  //    where an edge ends somewhere along the middle of this edge.
+  // 2) get the edges endpoints. needed for when we re-build the edge.
+  const edges_collinearVertices = make_edges_collinearVertices(graph);
+
+  const new_edges_vertices = edges_intersections
+    .map((a, i) => a.concat(edges_collinearVertices[i]));
+
+  new_edges_vertices.forEach((e, i) => e
     .sort(edges_alignment[i] ? horizSort : vertSort));
   // edges_intersections2.forEach((e,i) =>
   //  e.sort(edges_alignment[i] ? horizSort2 : vertSort2)
   // )
 
-  let new_edges = edges_intersections
-    .map((e, i) => [edges[i][0], ...e, edges[i][1]])
+  let new_edges = new_edges_vertices
+    // .map((e, i) => [edges[i][0], ...e, edges[i][1]])
     .map(ev => Array.from(Array(ev.length - 1))
       .map((_, i) => [ev[i], ev[(i + 1)]]));
 
@@ -242,7 +268,7 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
       vertices_equivalent[i][j] = equivalent(
         vertices_coords[i],
         vertices_coords[j],
-        epsilon,
+        epsilon
       );
     }
   }
@@ -275,7 +301,7 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
 
   const flat = {
     vertices_coords,
-    edges_vertices,
+    edges_vertices
   };
 
   if ("edges_assignment" in graph === true) {

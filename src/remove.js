@@ -3,13 +3,13 @@ import {
   edges_count,
   faces_count,
   get_boundary,
-  get_isolated_vertices,
+  get_isolated_vertices
 } from "./query";
 
 const get_geometry_length = {
   vertices: vertices_count,
   edges: edges_count,
-  faces: faces_count,
+  faces: faces_count
 };
 
 const remove_degree_two_vertex = function (graph, vertex) {
@@ -162,7 +162,7 @@ export const remove_duplicate_edges = function (graph) {
     for (let j = i + 1; j < graph.edges_vertices.length; j += 1) {
       edges_equivalent[i][j] = equivalent2(
         graph.edges_vertices[i],
-        graph.edges_vertices[j],
+        graph.edges_vertices[j]
       );
     }
   }
@@ -289,7 +289,7 @@ const remove_from_array = function (array, match_function) {
  * subscript should be a component, "vertices" will search "faces_vertices"...
  */
 export const reindex_subscript = function (
-  graph, subscript, old_index, new_index,
+  graph, subscript, old_index, new_index
 ) {
   Object.keys(graph)
     .filter(key => key.includes(`_${subscript}`))
