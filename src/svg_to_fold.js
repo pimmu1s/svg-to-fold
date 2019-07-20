@@ -8,7 +8,7 @@ const assignment_foldAngle = {
   V: 180,
   v: 180,
   M: -180,
-  m: -180,
+  m: -180
 };
 
 const ea_to_fa = function (assignment) {
@@ -32,7 +32,7 @@ const emptyFOLD = function () {
     edges_foldAngle: [],
     edges_length: [],
     faces_vertices: [],
-    faces_edges: [],
+    faces_edges: []
   };
 };
 

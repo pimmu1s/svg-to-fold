@@ -15,7 +15,7 @@ const SVGtoFOLD = function (input, options) {
 
 SVGtoFOLD.core = {
   segmentize: () => { },
-  fragment,
+  fragment
 };
 
 export default SVGtoFOLD;

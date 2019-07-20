@@ -3927,31 +3927,40 @@
     core: core
   };
 
+  const point_on_edge_exclusive = function (point, edge0, edge1, epsilon = math.core.EPSILON) {
+    const edge0_1 = [edge0[0] - edge1[0], edge0[1] - edge1[1]];
+    const edge0_p = [edge0[0] - point[0], edge0[1] - point[1]];
+    const edge1_p = [edge1[0] - point[0], edge1[1] - point[1]];
+    const dEdge = Math.sqrt(edge0_1[0] * edge0_1[0] + edge0_1[1] * edge0_1[1]);
+    const dP0 = Math.sqrt(edge0_p[0] * edge0_p[0] + edge0_p[1] * edge0_p[1]);
+    const dP1 = Math.sqrt(edge1_p[0] * edge1_p[0] + edge1_p[1] * edge1_p[1]);
+    return Math.abs(dEdge - dP0 - dP1) < epsilon;
+  };
   const max_array_length = function (...arrays) {
     return Math.max(...(arrays
       .filter(el => el !== undefined)
       .map(el => el.length)));
   };
   const vertices_count = function ({
-    vertices_coords, vertices_faces, vertices_vertices,
+    vertices_coords, vertices_faces, vertices_vertices
   }) {
     return max_array_length([], vertices_coords,
       vertices_faces, vertices_vertices);
   };
   const edges_count = function ({
-    edges_vertices, edges_faces,
+    edges_vertices, edges_faces
   }) {
     return max_array_length([], edges_vertices, edges_faces);
   };
   const faces_count = function ({
-    faces_vertices, faces_edges,
+    faces_vertices, faces_edges
   }) {
     return max_array_length([], faces_vertices, faces_edges);
   };
   const get_geometry_length = {
     vertices: vertices_count,
     edges: edges_count,
-    faces: faces_count,
+    faces: faces_count
   };
   const remove_geometry_key_indices = function (graph, key, removeIndices) {
     const geometry_array_size = get_geometry_length[key](graph);
@@ -4011,7 +4020,7 @@
       for (let j = i + 1; j < edges.length; j += 1) {
         crossings[i][j] = math.core.intersection.edge_edge_exclusive(
           edges[i][0], edges[i][1],
-          edges[j][0], edges[j][1],
+          edges[j][0], edges[j][1]
         );
       }
     }
@@ -4026,6 +4035,14 @@
     }
     return edges_intersections;
   };
+  const make_edges_collinearVertices = function ({
+    vertices_coords, edges_vertices
+  }, epsilon = math.core.EPSILON) {
+    const edges = edges_vertices
+      .map(ev => ev.map(v => vertices_coords[v]));
+    return edges.map(e => vertices_coords
+      .filter(v => point_on_edge_exclusive(v, e[0], e[1], epsilon)));
+  };
   const fragment = function (graph, epsilon = math.core.EPSILON) {
     const horizSort = function (a, b) { return a[0] - b[0]; };
     const vertSort = function (a, b) { return a[1] - b[1]; };
@@ -4034,10 +4051,12 @@
       .map(ev => ev.map(v => graph.vertices_coords[v]));
     edges.forEach((e, i) => e.sort(edges_alignment[i] ? horizSort : vertSort));
     const edges_intersections = make_edges_intersections(graph);
-    edges_intersections.forEach((e, i) => e
+    const edges_collinearVertices = make_edges_collinearVertices(graph);
+    const new_edges_vertices = edges_intersections
+      .map((a, i) => a.concat(edges_collinearVertices[i]));
+    new_edges_vertices.forEach((e, i) => e
       .sort(edges_alignment[i] ? horizSort : vertSort));
-    let new_edges = edges_intersections
-      .map((e, i) => [edges[i][0], ...e, edges[i][1]])
+    let new_edges = new_edges_vertices
       .map(ev => Array.from(Array(ev.length - 1))
         .map((_, i) => [ev[i], ev[(i + 1)]]));
     new_edges = new_edges
@@ -4062,7 +4081,7 @@
         vertices_equivalent[i][j] = equivalent$1(
           vertices_coords[i],
           vertices_coords[j],
-          epsilon,
+          epsilon
         );
       }
     }
@@ -4087,7 +4106,7 @@
         }));
     const flat = {
       vertices_coords,
-      edges_vertices,
+      edges_vertices
     };
     if ("edges_assignment" in graph === true) {
       flat.edges_assignment = edge_map.map(i => graph.edges_assignment[i]);
@@ -5582,7 +5601,7 @@
     V: 180,
     v: 180,
     M: -180,
-    m: -180,
+    m: -180
   };
   const ea_to_fa = function (assignment) {
     return assignment_foldAngle[assignment] || 0;
@@ -5604,7 +5623,7 @@
       edges_foldAngle: [],
       edges_length: [],
       faces_vertices: [],
-      faces_edges: [],
+      faces_edges: []
     };
   };
   const getSegmentAssignment = function (segment) {
@@ -5643,7 +5662,7 @@
   };
   SVGtoFOLD.core = {
     segmentize: () => { },
-    fragment,
+    fragment
   };
 
   return SVGtoFOLD;
