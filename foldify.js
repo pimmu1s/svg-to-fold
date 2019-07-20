@@ -1306,8 +1306,8 @@
     }
     const ep = 0.05;
     if (c[0] < ep && c[1] < ep && c[2] < ep) { return "F"; }
-    if (c[0] > c[1] && (c[0] - c[2]) > ep) { return "V"; }
-    if (c[2] > c[1] && (c[2] - c[0]) > ep) { return "M"; }
+    if (c[0] > c[1] && (c[0] - c[2]) > ep) { return "M"; }
+    if (c[2] > c[1] && (c[2] - c[0]) > ep) { return "V"; }
     return "F";
   };
 
