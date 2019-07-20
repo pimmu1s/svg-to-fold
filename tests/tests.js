@@ -1,14 +1,53 @@
 const fs = require("fs");
 const foldify = require("../foldify");
 
+
+// ////////////////////////////////////////////////////////////////////////////
+// synchronous tests
+// ////////////////////////////////////////////////////////////////////////////
+
+const sync_tests = [];
+
+const res_01 = foldify.core.fragment({
+  vertices_coords: [[0, 0], [0, 1], [1, 1], [1, 0]],
+  edges_vertices: [[0, 2], [1, 3]],
+  edges_assignment: ["M", "V"],
+});
+const res_01_mountain_test = res_01.edges_assignment
+  .filter(a => a === "M" || a === "m").length === 2;
+const res_01_valley_test = res_01.edges_assignment
+  .filter(a => a === "V" || a === "v").length === 2;
+sync_tests.push(res_01_mountain_test);
+sync_tests.push(res_01_valley_test);
+
+
+const res_02 = foldify.core.fragment({
+  vertices_coords: [[0, 0], [0, 1], [1, 1], [0.5, 0.5]],
+  edges_vertices: [[0, 2], [1, 3]],
+  edges_assignment: ["M", "V"],
+});
+const res_02_mountain_test = res_02.edges_assignment
+  .filter(a => a === "M" || a === "m").length === 2;
+const res_02_valley_test = res_02.edges_assignment
+  .filter(a => a === "V" || a === "v").length === 1;
+sync_tests.push(res_02_mountain_test);
+sync_tests.push(res_02_valley_test);
+
+if (sync_tests.reduce((a, b) => a && b, true)) {
+  console.log("all synchronous tests passed");
+} else {
+  throw new Error("synchronous tests failed");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////////
+// convert SVG to FOLD. save FOLD in output dir
+// ////////////////////////////////////////////////////////////////////////////
+
 const outputDir = "./tests/output";
 fs.existsSync(outputDir) || fs.mkdirSync(outputDir);
 
 const filenames = Array.from(Array(5)).map((_, i) => `test-0${i + 1}`);
-
-const sync_tests = [];
-
-// filenames.push("crane-attr");
 
 // test properties of each of the test file's fold objects
 const test_vertices_count = [13, 17, 12, 9, null];
@@ -53,34 +92,17 @@ filenames.forEach((name, i) => {
   });
 });
 
-const res_01 = foldify.core.fragment({
-  vertices_coords: [[0, 0], [0, 1], [1, 1], [1, 0]],
-  edges_vertices: [[0, 2], [1, 3]],
-  edges_assignment: ["M", "V"],
+
+// ////////////////////////////////////////////////////////////////////////////
+// additional file conversion tests
+// ////////////////////////////////////////////////////////////////////////////
+
+["crane-attr"].forEach((name) => {
+  fs.readFile(`./tests/files/${name}.svg`, "utf8", (err, data) => {
+    if (err) { throw err; }
+    fs.writeFile(`./tests/output/${name}.fold`, JSON.stringify(foldify(data, { epsilon: 2 }), null, 2), (err2) => {
+      if (err2) { throw err2; }
+      console.log(`SVG -> FOLD result at output/${name}.fold`);
+    });
+  });
 });
-const res_01_mountain_test = res_01.edges_assignment
-  .filter(a => a === "M" || a === "m").length === 2;
-const res_01_valley_test = res_01.edges_assignment
-  .filter(a => a === "V" || a === "v").length === 2;
-sync_tests.push(res_01_mountain_test);
-sync_tests.push(res_01_valley_test);
-
-
-const res_02 = foldify.core.fragment({
-  vertices_coords: [[0, 0], [0, 1], [1, 1], [0.5, 0.5]],
-  edges_vertices: [[0, 2], [1, 3]],
-  edges_assignment: ["M", "V"],
-});
-const res_02_mountain_test = res_02.edges_assignment
-  .filter(a => a === "M" || a === "m").length === 2;
-const res_02_valley_test = res_02.edges_assignment
-  .filter(a => a === "V" || a === "v").length === 1;
-sync_tests.push(res_02_mountain_test);
-sync_tests.push(res_02_valley_test);
-
-
-if (sync_tests.reduce((a, b) => a && b, true)) {
-  console.log("all synchronous tests passed");
-} else {
-  throw new Error("synchronous tests failed");
-}

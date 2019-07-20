@@ -130,7 +130,9 @@ const make_edges_alignment = function ({ vertices_coords, edges_vertices }) {
   return edges_normalized.map(e => Math.abs(e[0]) > 0.707);
 };
 
-const make_edges_intersections = function ({ vertices_coords, edges_vertices }) {
+const make_edges_intersections = function ({
+  vertices_coords, edges_vertices
+}, epsilon = math.core.EPSILON) {
   const edge_count = edges_vertices.length;
   const edges = edges_vertices
     .map(ev => ev.map(v => vertices_coords[v]));
@@ -150,7 +152,8 @@ const make_edges_intersections = function ({ vertices_coords, edges_vertices }) 
     for (let j = i + 1; j < edges.length; j += 1) {
       crossings[i][j] = math.core.intersection.edge_edge_exclusive(
         edges[i][0], edges[i][1],
-        edges[j][0], edges[j][1]
+        edges[j][0], edges[j][1],
+        epsilon
       );
     }
   }
@@ -217,13 +220,13 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   edges.forEach((e, i) => e.sort(edges_alignment[i] ? horizSort : vertSort));
 
   // for each edge, get all the intersection points
-  const edges_intersections = make_edges_intersections(graph);
+  const edges_intersections = make_edges_intersections(graph, epsilon);
 
   // this does 2 very important things
   // 1) gather all the intersection points (that don't count as crossings)
   //    where an edge ends somewhere along the middle of this edge.
   // 2) get the edges endpoints. needed for when we re-build the edge.
-  const edges_collinearVertices = make_edges_collinearVertices(graph);
+  const edges_collinearVertices = make_edges_collinearVertices(graph, epsilon);
 
   const new_edges_vertices = edges_intersections
     .map((a, i) => a.concat(edges_collinearVertices[i]));
