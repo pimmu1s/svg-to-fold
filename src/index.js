@@ -1,5 +1,6 @@
 import window from "./environment/window";
 import svg_to_fold from "./svg_to_fold";
+import fragment from "./fragment";
 
 const SVGtoFOLD = function (input, options) {
   if (typeof input === "string") {
@@ -12,10 +13,9 @@ const SVGtoFOLD = function (input, options) {
   // let fold = svg_to_fold(result, options);
 };
 
-export default {
-  SVGtoFOLD,
-  interpret: {
-    segmentize: () => { },
-    fragment: () => { },
-  },
+SVGtoFOLD.core = {
+  segmentize: () => { },
+  fragment,
 };
+
+export default SVGtoFOLD;

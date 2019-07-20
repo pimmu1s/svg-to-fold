@@ -1,5 +1,7 @@
 import Segmentize from "../include/svg-segmentize";
 import color_to_assignment from "./color_to_assignment";
+import fragment from "./fragment";
+import convert from "../include/fold/convert";
 
 // edge assignment to fold angle
 const assignment_foldAngle = {
@@ -44,26 +46,31 @@ const getSegmentAssignment = function (segment) {
   return "U";
 };
 
-export const svg_to_fold = function (svg) {
-  const graph = emptyFOLD();
-  const v0 = graph.vertices_coords.length;
+const svg_to_fold = function (svg) {
+  const pre_frag = emptyFOLD();
+  const v0 = pre_frag.vertices_coords.length;
   const segments = Segmentize(svg);
 
-  graph.vertices_coords = segments
+  pre_frag.vertices_coords = segments
     .map(s => [[s[0], s[1]], [s[2], s[3]]])
-    .reduce((a, b) => a.concat(b), []);
+    .reduce((a, b) => a.concat(b), pre_frag.vertices_coords);
+  pre_frag.edges_vertices = segments.map((_, i) => [v0 + i * 2, v0 + i * 2 + 1]);
+  pre_frag.edges_assignment = segments.map(l => getSegmentAssignment(l));
+  // pre_frag.edges_foldAngle = pre_frag.edges_assignment.map(a => ea_to_fa(a));
 
-  // return graph;
+  // console.log("pre-frag", pre_frag);
 
-  graph.edges_vertices = segments.map((_, i) => [v0 + i * 2, v0 + i * 2 + 1]);
-  graph.edges_assignment = segments.map(l => getSegmentAssignment(l));
+  const graph = fragment(pre_frag);
+  convert.edges_vertices_to_vertices_vertices_sorted(graph);
+  convert.vertices_vertices_to_faces_vertices(graph);
+  convert.faces_vertices_to_faces_edges(graph);
   graph.edges_foldAngle = graph.edges_assignment.map(a => ea_to_fa(a));
 
-  // console.log(fragment(graph));
   // console.log("svg_to_fold");
   // todo: import semgents into a planar graph, handle edge crossings
 
   // Graph.makeComplete(graph);
+  // return graph;
   return graph;
 };
 
