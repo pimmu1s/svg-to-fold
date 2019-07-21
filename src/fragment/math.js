@@ -11,11 +11,7 @@ const equivalent = function (a, b, epsilon = EPSILON) {
 
 const edge_edge_comp_exclusive = (t0, t1) => t0 > EPSILON && t0 < 1 - EPSILON && t1 > EPSILON
   && t1 < 1 - EPSILON;
-/**
- * the generalized vector intersection function
- * requires a compFunction to describe valid bounds checking
- * line always returns true, ray is true for t > 0, edge must be between 0 < t < 1
-*/
+
 const intersection_function = function (aPt, aVec, bPt, bVec, compFunc, epsilon = EPSILON) {
   function det(a, b) { return a[0] * b[1] - b[0] * a[1]; }
   const denominator0 = det(aVec, bVec);
