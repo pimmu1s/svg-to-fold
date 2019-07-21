@@ -1,10 +1,26 @@
+/**
+ * fragment splits overlapping edges at their intersections
+ * and joins new edges at a new shared vertex.
+ *
+ * this destroys and rebuilds all face data, leaving only:
+ * - vertices_coords
+ * - edges_vertices, edges_assignment, edges_foldAngle
+ */
+
 import math from "./math";
 import remove from "./remove";
 
-// import filter from "../include/fold/filter";
-
 const edges_vertices_equivalent = function (a, b) {
   return (a[0] === b[0] && a[1] === b[1]) || (a[0] === b[1] && a[1] === b[0]);
+};
+
+const make_edges_collinearVertices = function ({
+  vertices_coords, edges_vertices
+}, epsilon = math.core.EPSILON) {
+  const edges = edges_vertices
+    .map(ev => ev.map(v => vertices_coords[v]));
+  return edges.map(e => vertices_coords
+    .filter(v => math.core.point_on_edge_exclusive(v, e[0], e[1], epsilon)));
 };
 
 const make_edges_alignment = function ({ vertices_coords, edges_vertices }) {
@@ -46,109 +62,60 @@ const make_edges_intersections = function ({
     }
   }
   // build a list for each edge containing the intersection points
-  //
   // 0 [ [0.25, 0.125] ]
   // 1 [ [0.25, 0.125], [0.99, 0.88] ]
   // 2 [ ]
   // 3 [ [0.99, 0.88] ]
-  //
   const edges_intersections = Array.from(Array(edge_count)).map(() => []);
   for (let i = 0; i < edges.length - 1; i += 1) {
     for (let j = i + 1; j < edges.length; j += 1) {
       if (crossings[i][j] != null) {
-        // keep in mind - these are shallow pointers
         edges_intersections[i].push(crossings[i][j]);
         edges_intersections[j].push(crossings[i][j]);
       }
     }
   }
+  // careful with the pairs in separate locations - these are shallow pointers
   return edges_intersections;
-  // let edges_intersections2 = Array.from(Array(edge_count)).map(_ => []);
-  // for (let i = 0; i < edges.length-1; i++) {
-  //  for (let j = i+1; j < edges.length; j++) {
-  //    if (crossings[i][j] != null) {
-  //      // warning - these are shallow pointers
-  //      edges_intersections2[i].push({edge:j, intersection:crossings[i][j]});
-  //      edges_intersections2[j].push({edge:i, intersection:crossings[i][j]});
-  //    }
-  //  }
-  // }
 };
 
-const make_edges_collinearVertices = function ({
-  vertices_coords, edges_vertices
-}, epsilon = math.core.EPSILON) {
-  const edges = edges_vertices
-    .map(ev => ev.map(v => vertices_coords[v]));
-  return edges.map(e => vertices_coords
-    .filter(v => math.core.point_on_edge_exclusive(v, e[0], e[1], epsilon)));
-};
 
-/**
- * fragment splits overlapping edges at their intersections
- * and joins new edges at a new shared vertex.
- * this destroys and rebuilds all face data with face walking
- */
 const fragment = function (graph, epsilon = math.core.EPSILON) {
   const horizSort = function (a, b) { return a[0] - b[0]; };
   const vertSort = function (a, b) { return a[1] - b[1]; };
-  // const horizSort2 = function (a,b){
-  //  return a.intersection[0] - b.intersection[0]; }
-  // const vertSort2 = function (a,b){
-  //  return a.intersection[1] - b.intersection[1]; }
-
   // when we rebuild an edge we need the intersection points sorted so we can
   // walk down it and rebuild one by one. should the walk proceed
   // horizontally or vertically?
   const edges_alignment = make_edges_alignment(graph);
-
   const edges = graph.edges_vertices
     .map(ev => ev.map(v => graph.vertices_coords[v]));
-
   edges.forEach((e, i) => e.sort(edges_alignment[i] ? horizSort : vertSort));
-
   // for each edge, get all the intersection points
   const edges_intersections = make_edges_intersections(graph, epsilon);
-
   // this does 2 very important things
   // 1) gather all the intersection points (that don't count as crossings)
   //    where an edge ends somewhere along the middle of this edge.
   // 2) get the edges endpoints. needed for when we re-build the edge.
   const edges_collinearVertices = make_edges_collinearVertices(graph, epsilon);
-
-  // console.log("edges_intersections", edges_intersections);
-  // console.log("edges_collinearVertices", edges_collinearVertices);
-
   const new_edges_vertices = edges_intersections
     .map((a, i) => a.concat(edges_collinearVertices[i]));
-
   new_edges_vertices.forEach((e, i) => e
     .sort(edges_alignment[i] ? horizSort : vertSort));
-  // edges_intersections2.forEach((e,i) =>
-  //  e.sort(edges_alignment[i] ? horizSort2 : vertSort2)
-  // )
-
   let new_edges = new_edges_vertices
     // .map((e, i) => [edges[i][0], ...e, edges[i][1]])
     .map(ev => Array.from(Array(ev.length - 1))
       .map((_, i) => [ev[i], ev[(i + 1)]]));
-
   // remove degenerate edges
   new_edges = new_edges
     .map(edgeGroup => edgeGroup
       .filter(e => false === e
         .map((_, i) => Math.abs(e[0][i] - e[1][i]) < epsilon)
         .reduce((a, b) => a && b, true)));
-
   // let edge_map = new_edges.map(edge => edge.map(_ => counter++));
   const edge_map = new_edges
     .map((edge, i) => edge.map(() => i))
     .reduce((a, b) => a.concat(b), []);
-
-  // console.log("edge_map", edge_map);
-
   // remove duplicate vertices
-
   const vertices_coords = new_edges
     .map(edge => edge.reduce((a, b) => a.concat(b), []))
     .reduce((a, b) => a.concat(b), []);
@@ -156,7 +123,6 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   const edges_vertices = new_edges
     .map(edge => edge.map(() => [counter++, counter++]))
     .reduce((a, b) => a.concat(b), []);
-
   const vertices_equivalent = Array
     .from(Array(vertices_coords.length)).map(() => []);
   for (let i = 0; i < vertices_coords.length - 1; i += 1) {
@@ -168,7 +134,6 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
       );
     }
   }
-  // console.log(vertices_equivalent);
   const vertices_map = vertices_coords.map(() => undefined);
   vertices_equivalent
     .forEach((row, i) => row
@@ -179,18 +144,15 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
             : vertices_map[i];
         }
       }));
-
   const vertices_remove = vertices_map.map(m => m !== undefined);
   vertices_map.forEach((map, i) => {
     if (map === undefined) { vertices_map[i] = i; }
   });
-  // console.log("vertices_map", vertices_map);
   edges_vertices
     .forEach((edge, i) => edge
       .forEach((v, j) => {
         edges_vertices[i][j] = vertices_map[v];
       }));
-
   // remove duplicate edges
   const edges_equivalent = Array
     .from(Array(edges_vertices.length)).map(() => []);
@@ -202,7 +164,6 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
       );
     }
   }
-
   const edges_map = edges_vertices.map(() => undefined);
   edges_equivalent
     .forEach((row, i) => row
@@ -217,12 +178,10 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
             : edges_map[j];
         }
       }));
-
   const edges_dont_remove = edges_map.map(m => m === undefined);
   edges_map.forEach((map, i) => {
     if (map === undefined) { edges_map[i] = i; }
   });
-
   const edges_vertices_cl = edges_vertices.filter((_, i) => edges_dont_remove[i]);
   const edge_map_cl = edge_map.filter((_, i) => edges_dont_remove[i]);
 
@@ -230,27 +189,16 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
     vertices_coords,
     edges_vertices: edges_vertices_cl
   };
-
   if ("edges_assignment" in graph === true) {
     flat.edges_assignment = edge_map_cl.map(i => graph.edges_assignment[i]);
   }
   if ("edges_foldAngle" in graph === true) {
     flat.edges_foldAngle = edge_map_cl.map(i => graph.edges_foldAngle[i]);
   }
-
-  // console.log("edges_vertices", edges_vertices);
-  // console.log("vertices_remove", vertices_remove);
   const vertices_remove_indices = vertices_remove
     .map((rm, i) => (rm ? i : undefined))
     .filter(i => i !== undefined);
   remove(flat, "vertices", vertices_remove_indices);
-
-  // console.log(flat);
-
-  // convert.edges_vertices_to_vertices_vertices_sorted(flat);
-  // convert.vertices_vertices_to_faces_vertices(flat);
-  // convert.faces_vertices_to_faces_edges(flat);
-
   return flat;
 };
 

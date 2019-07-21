@@ -32,6 +32,9 @@ const hexToComponents = function (h) {
 };
 
 const color_to_assignment = function (string) {
+  if (string == null || typeof string !== "string") {
+    return "U";
+  }
   // cannot discern between mark and boundary
   // boundary has to be decided by planar analysis
   let c = [0, 0, 0, 1];
@@ -40,13 +43,13 @@ const color_to_assignment = function (string) {
   } else if (css_color_names.indexOf(string) !== -1) {
     c = hexToComponents(css_colors[string]);
   }
-  //
   const ep = 0.05;
   // black
-  if (c[0] < ep && c[1] < ep && c[2] < ep) { return "F"; }
+  if (c[0] < ep && c[1] < ep && c[2] < ep) { return "U"; }
+  // red and blue
   if (c[0] > c[1] && (c[0] - c[2]) > ep) { return "M"; }
   if (c[2] > c[1] && (c[2] - c[0]) > ep) { return "V"; }
-  return "F";
+  return "U";
 };
 
 export default color_to_assignment;

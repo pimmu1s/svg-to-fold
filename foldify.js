@@ -1522,6 +1522,10 @@
   };
 
   var color_to_assignment = function color_to_assignment(string) {
+    if (string == null || typeof string !== "string") {
+      return "U";
+    }
+
     var c = [0, 0, 0, 1];
 
     if (string[0] === "#") {
@@ -1533,7 +1537,7 @@
     var ep = 0.05;
 
     if (c[0] < ep && c[1] < ep && c[2] < ep) {
-      return "F";
+      return "U";
     }
 
     if (c[0] > c[1] && c[0] - c[2] > ep) {
@@ -1544,7 +1548,7 @@
       return "V";
     }
 
-    return "F";
+    return "U";
   };
 
   var EPSILON = 1e-6;
@@ -1703,9 +1707,25 @@
     return a[0] === b[0] && a[1] === b[1] || a[0] === b[1] && a[1] === b[0];
   };
 
-  var make_edges_alignment = function make_edges_alignment(_ref) {
+  var make_edges_collinearVertices = function make_edges_collinearVertices(_ref) {
     var vertices_coords = _ref.vertices_coords,
         edges_vertices = _ref.edges_vertices;
+    var epsilon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : math.core.EPSILON;
+    var edges = edges_vertices.map(function (ev) {
+      return ev.map(function (v) {
+        return vertices_coords[v];
+      });
+    });
+    return edges.map(function (e) {
+      return vertices_coords.filter(function (v) {
+        return math.core.point_on_edge_exclusive(v, e[0], e[1], epsilon);
+      });
+    });
+  };
+
+  var make_edges_alignment = function make_edges_alignment(_ref2) {
+    var vertices_coords = _ref2.vertices_coords,
+        edges_vertices = _ref2.edges_vertices;
     var edges = edges_vertices.map(function (ev) {
       return ev.map(function (v) {
         return vertices_coords[v];
@@ -1725,9 +1745,9 @@
     });
   };
 
-  var make_edges_intersections = function make_edges_intersections(_ref2) {
-    var vertices_coords = _ref2.vertices_coords,
-        edges_vertices = _ref2.edges_vertices;
+  var make_edges_intersections = function make_edges_intersections(_ref3) {
+    var vertices_coords = _ref3.vertices_coords,
+        edges_vertices = _ref3.edges_vertices;
     var epsilon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : math.core.EPSILON;
     var edge_count = edges_vertices.length;
     var edges = edges_vertices.map(function (ev) {
@@ -1760,22 +1780,6 @@
     }
 
     return edges_intersections;
-  };
-
-  var make_edges_collinearVertices = function make_edges_collinearVertices(_ref3) {
-    var vertices_coords = _ref3.vertices_coords,
-        edges_vertices = _ref3.edges_vertices;
-    var epsilon = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : math.core.EPSILON;
-    var edges = edges_vertices.map(function (ev) {
-      return ev.map(function (v) {
-        return vertices_coords[v];
-      });
-    });
-    return edges.map(function (e) {
-      return vertices_coords.filter(function (v) {
-        return math.core.point_on_edge_exclusive(v, e[0], e[1], epsilon);
-      });
-    });
   };
 
   var fragment = function fragment(graph) {
@@ -3874,7 +3878,7 @@
     m: -180
   };
 
-  var ea_to_fa = function ea_to_fa(assignment) {
+  var assignment_to_foldAngle = function assignment_to_foldAngle(assignment) {
     return assignment_foldAngle[assignment] || 0;
   };
 
@@ -3899,18 +3903,6 @@
     };
   };
 
-  var getSegmentAssignment = function getSegmentAssignment(segment) {
-    if (segment[4] != null) {
-      var strokeColor = segment[4].stroke;
-
-      if (strokeColor != null) {
-        return color_to_assignment(strokeColor);
-      }
-    }
-
-    return "U";
-  };
-
   var svg_to_fold = function svg_to_fold(svg, options) {
     var pre_frag = emptyFOLD();
     var v0 = pre_frag.vertices_coords.length;
@@ -3923,15 +3915,17 @@
     pre_frag.edges_vertices = segments.map(function (_, i) {
       return [v0 + i * 2, v0 + i * 2 + 1];
     });
-    pre_frag.edges_assignment = segments.map(function (l) {
-      return getSegmentAssignment(l);
+    pre_frag.edges_assignment = segments.map(function (a) {
+      return a[4];
+    }).map(function (attrs) {
+      return attrs != null ? color_to_assignment(attrs.stroke) : "U";
     });
     var graph = fragment(pre_frag, options.epsilon);
     convert.edges_vertices_to_vertices_vertices_sorted(graph);
     convert.vertices_vertices_to_faces_vertices(graph);
     convert.faces_vertices_to_faces_edges(graph);
     graph.edges_foldAngle = graph.edges_assignment.map(function (a) {
-      return ea_to_fa(a);
+      return assignment_to_foldAngle(a);
     });
     return graph;
   };
