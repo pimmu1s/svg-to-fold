@@ -1,6 +1,6 @@
 import Segmentize from "../include/svg-segmentize";
 import color_to_assignment from "./color_to_assignment";
-import fragment from "./fragment";
+import fragment from "./fragment/fragment";
 import convert from "../include/fold/convert";
 
 // edge assignment to fold angle
