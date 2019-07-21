@@ -2,7 +2,7 @@ import window from "./environment/window";
 import svg_to_fold from "./svg_to_fold";
 import fragment from "./fragment";
 
-const SVGtoFOLD = function (input, options) {
+const SVGtoFOLD = function (input, options = {}) {
   if (typeof input === "string") {
     const svg = (new window.DOMParser())
       .parseFromString(input, "text/xml").documentElement;

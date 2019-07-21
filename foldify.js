@@ -4011,7 +4011,9 @@
       .map((e, i) => [e[0] / edges_magnitude[i], e[1] / edges_magnitude[i]]);
     return edges_normalized.map(e => Math.abs(e[0]) > 0.707);
   };
-  const make_edges_intersections = function ({ vertices_coords, edges_vertices }) {
+  const make_edges_intersections = function ({
+    vertices_coords, edges_vertices
+  }, epsilon = math.core.EPSILON) {
     const edge_count = edges_vertices.length;
     const edges = edges_vertices
       .map(ev => ev.map(v => vertices_coords[v]));
@@ -4020,7 +4022,8 @@
       for (let j = i + 1; j < edges.length; j += 1) {
         crossings[i][j] = math.core.intersection.edge_edge_exclusive(
           edges[i][0], edges[i][1],
-          edges[j][0], edges[j][1]
+          edges[j][0], edges[j][1],
+          epsilon
         );
       }
     }
@@ -4050,8 +4053,8 @@
     const edges = graph.edges_vertices
       .map(ev => ev.map(v => graph.vertices_coords[v]));
     edges.forEach((e, i) => e.sort(edges_alignment[i] ? horizSort : vertSort));
-    const edges_intersections = make_edges_intersections(graph);
-    const edges_collinearVertices = make_edges_collinearVertices(graph);
+    const edges_intersections = make_edges_intersections(graph, epsilon);
+    const edges_collinearVertices = make_edges_collinearVertices(graph, epsilon);
     const new_edges_vertices = edges_intersections
       .map((a, i) => a.concat(edges_collinearVertices[i]));
     new_edges_vertices.forEach((e, i) => e
@@ -5635,7 +5638,7 @@
     }
     return "U";
   };
-  const svg_to_fold = function (svg) {
+  const svg_to_fold = function (svg, options) {
     const pre_frag = emptyFOLD();
     const v0 = pre_frag.vertices_coords.length;
     const segments = Segmentize(svg);
@@ -5644,7 +5647,7 @@
       .reduce((a, b) => a.concat(b), pre_frag.vertices_coords);
     pre_frag.edges_vertices = segments.map((_, i) => [v0 + i * 2, v0 + i * 2 + 1]);
     pre_frag.edges_assignment = segments.map(l => getSegmentAssignment(l));
-    const graph = fragment(pre_frag);
+    const graph = fragment(pre_frag, options.epsilon);
     convert.edges_vertices_to_vertices_vertices_sorted(graph);
     convert.vertices_vertices_to_faces_vertices(graph);
     convert.faces_vertices_to_faces_edges(graph);
@@ -5652,7 +5655,7 @@
     return graph;
   };
 
-  const SVGtoFOLD = function (input, options) {
+  const SVGtoFOLD = function (input, options = {}) {
     if (typeof input === "string") {
       const svg = (new win.DOMParser())
         .parseFromString(input, "text/xml").documentElement;

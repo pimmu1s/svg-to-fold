@@ -46,7 +46,7 @@ const getSegmentAssignment = function (segment) {
   return "U";
 };
 
-const svg_to_fold = function (svg) {
+const svg_to_fold = function (svg, options) {
   const pre_frag = emptyFOLD();
   const v0 = pre_frag.vertices_coords.length;
   const segments = Segmentize(svg);
@@ -60,7 +60,7 @@ const svg_to_fold = function (svg) {
 
   // console.log("pre-frag", pre_frag);
 
-  const graph = fragment(pre_frag);
+  const graph = fragment(pre_frag, options.epsilon);
   convert.edges_vertices_to_vertices_vertices_sorted(graph);
   convert.vertices_vertices_to_faces_vertices(graph);
   convert.faces_vertices_to_faces_edges(graph);
