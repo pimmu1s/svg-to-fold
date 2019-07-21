@@ -50,11 +50,11 @@ fs.existsSync(outputDir) || fs.mkdirSync(outputDir);
 const filenames = Array.from(Array(5)).map((_, i) => `test-0${i + 1}`);
 
 // test properties of each of the test file's fold objects
-const test_vertices_count = [13, 17, 12, 9, null];
-const test_edges_count = [11, 16, 16, 13, null];
-const test_edges_m_count = [4, 8, 3, 3, null];
-const test_edges_v_count = [4, 6, 4, 4, null];
-const test_edges_u_count = [3, 2, 9, 6, null];
+const test_vertices_count = [13, 17, 12, 9, 6];
+const test_edges_count = [11, 16, 16, 13, 5];
+const test_edges_m_count = [4, 8, 3, 3, 2];
+const test_edges_v_count = [4, 6, 4, 4, 1];
+const test_edges_u_count = [3, 2, 9, 6, 2];
 
 const int_match = function (one, two, errorString) {
   // pass. cannot test.
@@ -69,19 +69,25 @@ filenames.forEach((name, i) => {
     const fold = foldify(data);
 
     // test components of fold object
-    int_match(fold.vertices_coords.length, test_vertices_count[i],
-      `${name} vertices length error`);
-    int_match(fold.edges_vertices.length, test_edges_count[i],
-      `${name} edges length error`);
-    int_match(fold.edges_assignment.filter(a => a === "M" || a === "m").length,
-      test_edges_m_count[i],
-      `${name} edges mountain crease count error`);
-    int_match(fold.edges_assignment.filter(a => a === "V" || a === "v").length,
-      test_edges_v_count[i],
-      `${name} edges valley crease count error`);
-    int_match(fold.edges_assignment.filter(a => ["F", "f", "U", "u"].indexOf(a) !== -1).length,
-      test_edges_u_count[i],
-      `${name} edges unassigned/mark crease count error`);
+    try {
+      int_match(fold.vertices_coords.length, test_vertices_count[i],
+        `${name} vertices length error`);
+      int_match(fold.edges_vertices.length, test_edges_count[i],
+        `${name} edges length error`);
+      int_match(fold.edges_assignment.filter(a => a === "M" || a === "m").length,
+        test_edges_m_count[i],
+        `${name} edges mountain crease count error`);
+      int_match(fold.edges_assignment.filter(a => a === "V" || a === "v").length,
+        test_edges_v_count[i],
+        `${name} edges valley crease count error`);
+      int_match(fold.edges_assignment.filter(a => ["F", "f", "U", "u"].indexOf(a) !== -1).length,
+        test_edges_u_count[i],
+        `${name} edges unassigned/mark crease count error`);
+    } catch (error) {
+      console.log("encountered error with fold");
+      console.log(fold);
+      throw error;
+    }
 
     // write fold file
     const json = JSON.stringify(fold, null, 2);

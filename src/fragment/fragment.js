@@ -1,122 +1,10 @@
-import math from "../include/math";
+import math from "./math";
+import remove from "./remove";
+
 // import filter from "../include/fold/filter";
-// import {
-//   remove_vertices,
-//   remove_edges,
-//   remove_faces
-// } from "./remove";
-const point_on_edge_exclusive = function (point, edge0, edge1, epsilon = math.core.EPSILON) {
-  const edge0_1 = [edge0[0] - edge1[0], edge0[1] - edge1[1]];
-  const edge0_p = [edge0[0] - point[0], edge0[1] - point[1]];
-  const edge1_p = [edge1[0] - point[0], edge1[1] - point[1]];
-  const dEdge = Math.sqrt(edge0_1[0] * edge0_1[0] + edge0_1[1] * edge0_1[1]);
-  const dP0 = Math.sqrt(edge0_p[0] * edge0_p[0] + edge0_p[1] * edge0_p[1]);
-  const dP1 = Math.sqrt(edge1_p[0] * edge1_p[0] + edge1_p[1] * edge1_p[1]);
-  return Math.abs(dEdge - dP0 - dP1) < epsilon;
-};
 
-/**
- * provide arrays as arguments, this will filter out anything undefined
- * @returns {number} length of the longest array
- */
-const max_array_length = function (...arrays) {
-  return Math.max(...(arrays
-    .filter(el => el !== undefined)
-    .map(el => el.length)));
-};
-
-/* Get the number of vertices, edges, faces in the graph sourcing only their
- * primary key arrays. in the case of abstract graphs, use "implied" functions
- * @returns {number} number of geometry elements
- */
-const vertices_count = function ({
-  vertices_coords, vertices_faces, vertices_vertices
-}) {
-  return max_array_length([], vertices_coords,
-    vertices_faces, vertices_vertices);
-};
-
-const edges_count = function ({
-  edges_vertices, edges_faces
-}) {
-  return max_array_length([], edges_vertices, edges_faces);
-};
-
-const faces_count = function ({
-  faces_vertices, faces_edges
-}) {
-  return max_array_length([], faces_vertices, faces_edges);
-};
-
-const get_geometry_length = {
-  vertices: vertices_count,
-  edges: edges_count,
-  faces: faces_count
-};
-
-/**
- * the generalized method for removing vertices, edges, faces.
- * updates both suffix and prefix arrays (vertices_... and ..._vertices).
- * array indices shift after removal, this updates all relevant arrays.
- *
- * @param key is a string, like "vertices"
- * @param removeIndices, array of numbers, like [1,9,25]
- */
-const remove_geometry_key_indices = function (graph, key, removeIndices) {
-  const geometry_array_size = get_geometry_length[key](graph);
-  const removes = Array(geometry_array_size).fill(false);
-  removeIndices.forEach((v) => { removes[v] = true; });
-  let s = 0;
-  // index_map length is the original length of the geometry (vertices_faces)
-  const index_map = removes.map(remove => (remove ? --s : s));
-  if (removeIndices.length === 0) { return index_map; }
-
-  // these comments are written as if "vertices" was provided as the key
-  const prefix = `${key}_`;
-  const suffix = `_${key}`;
-  // get all keys like vertices_coords
-  const graph_keys = Object.keys(graph);
-  const prefixKeys = graph_keys
-    .map(str => (str.substring(0, prefix.length) === prefix ? str : undefined))
-    .filter(str => str !== undefined);
-  // keys like faces_vertices, vertices_vertices (that one counts in both)
-  const suffixKeys = graph_keys
-    .map(str => (str.substring(str.length - suffix.length, str.length) === suffix
-      ? str
-      : undefined))
-    .filter(str => str !== undefined);
-  // update every component that points to vertices_coords
-  // these arrays do not change their size, only their contents
-  suffixKeys
-    .forEach(sKey => graph[sKey]
-      .forEach((_, i) => graph[sKey][i]
-        .forEach((v, j) => { graph[sKey][i][j] += index_map[v]; })));
-  // update every array with a 1:1 relationship to vertices_ arrays
-  // these arrays change their size, their contents are untouched
-  prefixKeys.forEach((pKey) => {
-    graph[pKey] = graph[pKey]
-      .filter((_, i) => !removes[i]);
-  });
-  return index_map;
-};
-
-/** Removes vertices, updates all relevant array indices
- *
- * @param {vertices} an array of vertex indices
- * @example remove_vertices(fold_file, [2,6,11,15]);
- */
-const remove_vertices = function (graph, vertices) {
-  return remove_geometry_key_indices(graph, "vertices", vertices);
-  // todo: do the same with frames in file_frames where inherit=true
-};
-
-const equivalent = function (a, b, epsilon = math.core.EPSILON) {
-  for (let i = 0; i < a.length; i += 1) {
-    if (Math.abs(a[i] - b[i]) > epsilon) {
-      return false;
-    }
-  }
-  return true;
+const edges_vertices_equivalent = function (a, b) {
+  return (a[0] === b[0] && a[1] === b[1]) || (a[0] === b[1] && a[1] === b[0]);
 };
 
 const make_edges_alignment = function ({ vertices_coords, edges_vertices }) {
@@ -193,7 +81,7 @@ const make_edges_collinearVertices = function ({
   const edges = edges_vertices
     .map(ev => ev.map(v => vertices_coords[v]));
   return edges.map(e => vertices_coords
-    .filter(v => point_on_edge_exclusive(v, e[0], e[1], epsilon)));
+    .filter(v => math.core.point_on_edge_exclusive(v, e[0], e[1], epsilon)));
 };
 
 /**
@@ -228,6 +116,9 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   // 2) get the edges endpoints. needed for when we re-build the edge.
   const edges_collinearVertices = make_edges_collinearVertices(graph, epsilon);
 
+  // console.log("edges_intersections", edges_intersections);
+  // console.log("edges_collinearVertices", edges_collinearVertices);
+
   const new_edges_vertices = edges_intersections
     .map((a, i) => a.concat(edges_collinearVertices[i]));
 
@@ -256,6 +147,8 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
 
   // console.log("edge_map", edge_map);
 
+  // remove duplicate vertices
+
   const vertices_coords = new_edges
     .map(edge => edge.reduce((a, b) => a.concat(b), []))
     .reduce((a, b) => a.concat(b), []);
@@ -268,16 +161,14 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
     .from(Array(vertices_coords.length)).map(() => []);
   for (let i = 0; i < vertices_coords.length - 1; i += 1) {
     for (let j = i + 1; j < vertices_coords.length; j += 1) {
-      vertices_equivalent[i][j] = equivalent(
+      vertices_equivalent[i][j] = math.core.equivalent(
         vertices_coords[i],
         vertices_coords[j],
         epsilon
       );
     }
   }
-
   // console.log(vertices_equivalent);
-
   const vertices_map = vertices_coords.map(() => undefined);
   vertices_equivalent
     .forEach((row, i) => row
@@ -293,25 +184,58 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   vertices_map.forEach((map, i) => {
     if (map === undefined) { vertices_map[i] = i; }
   });
-
   // console.log("vertices_map", vertices_map);
-
   edges_vertices
     .forEach((edge, i) => edge
       .forEach((v, j) => {
         edges_vertices[i][j] = vertices_map[v];
       }));
 
+  // remove duplicate edges
+  const edges_equivalent = Array
+    .from(Array(edges_vertices.length)).map(() => []);
+  for (let i = 0; i < edges_vertices.length - 1; i += 1) {
+    for (let j = i + 1; j < edges_vertices.length; j += 1) {
+      edges_equivalent[i][j] = edges_vertices_equivalent(
+        edges_vertices[i],
+        edges_vertices[j]
+      );
+    }
+  }
+
+  const edges_map = edges_vertices.map(() => undefined);
+  edges_equivalent
+    .forEach((row, i) => row
+      .forEach((eq, j) => {
+        if (eq) {
+          // edges_map[j] = edges_map[i] === undefined
+          //   ? i
+          //   : edges_map[i];
+          // save the last ones in the array, not the first
+          edges_map[i] = edges_map[j] === undefined
+            ? j
+            : edges_map[j];
+        }
+      }));
+
+  const edges_dont_remove = edges_map.map(m => m === undefined);
+  edges_map.forEach((map, i) => {
+    if (map === undefined) { edges_map[i] = i; }
+  });
+
+  const edges_vertices_cl = edges_vertices.filter((_, i) => edges_dont_remove[i]);
+  const edge_map_cl = edge_map.filter((_, i) => edges_dont_remove[i]);
+
   const flat = {
     vertices_coords,
-    edges_vertices
+    edges_vertices: edges_vertices_cl
   };
 
   if ("edges_assignment" in graph === true) {
-    flat.edges_assignment = edge_map.map(i => graph.edges_assignment[i]);
+    flat.edges_assignment = edge_map_cl.map(i => graph.edges_assignment[i]);
   }
   if ("edges_foldAngle" in graph === true) {
-    flat.edges_foldAngle = edge_map.map(i => graph.edges_foldAngle[i]);
+    flat.edges_foldAngle = edge_map_cl.map(i => graph.edges_foldAngle[i]);
   }
 
   // console.log("edges_vertices", edges_vertices);
@@ -319,7 +243,7 @@ const fragment = function (graph, epsilon = math.core.EPSILON) {
   const vertices_remove_indices = vertices_remove
     .map((rm, i) => (rm ? i : undefined))
     .filter(i => i !== undefined);
-  remove_vertices(flat, vertices_remove_indices);
+  remove(flat, "vertices", vertices_remove_indices);
 
   // console.log(flat);
 
