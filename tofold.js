@@ -48,7 +48,7 @@ more info on the FOLD format https://github.com/edemaine/fold
   var isWebWorker = (typeof self === "undefined" ? "undefined" : _typeof(self)) === "object" && self.constructor && self.constructor.name === "DedicatedWorkerGlobalScope";
 
   var htmlString = "<!DOCTYPE html><title>a</title>";
-  var win = {};
+  var win = !isNode && isBrowser ? window : {};
 
   if (isNode) {
     var _require = require("xmldom"),
@@ -58,10 +58,6 @@ more info on the FOLD format https://github.com/edemaine/fold
     win.DOMParser = DOMParser;
     win.XMLSerializer = XMLSerializer;
     win.document = new DOMParser().parseFromString(htmlString, "text/html");
-  } else if (isBrowser) {
-    win.DOMParser = window.DOMParser;
-    win.XMLSerializer = window.XMLSerializer;
-    win.document = window.document;
   }
 
   var css_colors = {
@@ -663,9 +659,9 @@ more info on the FOLD format https://github.com/edemaine/fold
     return flat;
   };
 
-  var Segmentize = require("svg-segmentize");
+  var Segmentize = win.Segmentize || require("svg-segmentize");
 
-  var FOLD = require("fold");
+  var FOLD = win.FOLD || require("fold");
 
   var assignment_foldAngle = {
     V: 180,
