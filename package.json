@@ -1,6 +1,6 @@
 {
   "name": "tofold",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "convert images into the FOLD format",
   "main": "tofold.js",
   "scripts": {
