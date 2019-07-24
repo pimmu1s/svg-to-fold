@@ -1,13 +1,13 @@
 {
-  "name": "foldify",
+  "name": "tofold",
   "version": "0.0.1",
   "description": "convert images into the FOLD format",
-  "main": "foldify.js",
+  "main": "tofold.js",
   "scripts": {
     "test": "node tests/tests.js"
   },
   "author": "Robby Kraft",
-  "repository": "https://github.com/robbykraft/foldify",
+  "repository": "https://github.com/robbykraft/tofold",
   "license": "ISC",
   "dependencies": {
     "xmldom": "^0.1.27"

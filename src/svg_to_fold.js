@@ -1,7 +1,8 @@
 import Segmentize from "../include/svg-segmentize";
 import color_to_assignment from "./color_to_assignment";
-import fragment from "./fragment/fragment";
+import fragment from "./graph/fragment";
 import convert from "../include/fold/convert";
+// import remove_collinear_vertices from "./graph/collinear";
 
 const assignment_foldAngle = {
   V: 180, v: 180, M: -180, m: -180
@@ -46,6 +47,7 @@ const svg_to_fold = function (svg, options) {
     .map(attrs => (attrs != null ? color_to_assignment(attrs.stroke) : "U"));
 
   const graph = fragment(pre_frag, options.epsilon);
+  // remove_collinear_vertices(graph);
   convert.edges_vertices_to_vertices_vertices_sorted(graph);
   convert.vertices_vertices_to_faces_vertices(graph);
   convert.faces_vertices_to_faces_edges(graph);

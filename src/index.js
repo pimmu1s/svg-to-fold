@@ -1,6 +1,6 @@
 import window from "./environment/window";
 import svg_to_fold from "./svg_to_fold";
-import fragment from "./fragment/fragment";
+import fragment from "./graph/fragment";
 
 const SVGtoFOLD = function (input, options = {}) {
   if (typeof input === "string") {

@@ -1,6 +1,5 @@
 const fs = require("fs");
-const foldify = require("../foldify");
-
+const tofold = require("../tofold");
 
 // ////////////////////////////////////////////////////////////////////////////
 // synchronous tests
@@ -8,7 +7,7 @@ const foldify = require("../foldify");
 
 const sync_tests = [];
 
-const res_01 = foldify.core.fragment({
+const res_01 = tofold.core.fragment({
   vertices_coords: [[0, 0], [0, 1], [1, 1], [1, 0]],
   edges_vertices: [[0, 2], [1, 3]],
   edges_assignment: ["M", "V"],
@@ -21,7 +20,7 @@ sync_tests.push(res_01_mountain_test);
 sync_tests.push(res_01_valley_test);
 
 
-const res_02 = foldify.core.fragment({
+const res_02 = tofold.core.fragment({
   vertices_coords: [[0, 0], [0, 1], [1, 1], [0.5, 0.5]],
   edges_vertices: [[0, 2], [1, 3]],
   edges_assignment: ["M", "V"],
@@ -66,7 +65,7 @@ filenames.forEach((name, i) => {
   fs.readFile(`./tests/files/${name}.svg`, "utf8", (err, data) => {
     if (err) { throw err; }
 
-    const fold = foldify(data);
+    const fold = tofold(data);
 
     // test components of fold object
     try {
@@ -106,7 +105,7 @@ filenames.forEach((name, i) => {
 ["crane-attr"].forEach((name) => {
   fs.readFile(`./tests/files/${name}.svg`, "utf8", (err, data) => {
     if (err) { throw err; }
-    fs.writeFile(`./tests/output/${name}.fold`, JSON.stringify(foldify(data, { epsilon: 2 }), null, 2), (err2) => {
+    fs.writeFile(`./tests/output/${name}.fold`, JSON.stringify(tofold(data, { epsilon: 2 }), null, 2), (err2) => {
       if (err2) { throw err2; }
       console.log(`SVG -> FOLD result at output/${name}.fold`);
     });

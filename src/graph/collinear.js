@@ -1,5 +1,9 @@
 import remove from "./remove";
 
+// 1. find the collinear vertices
+// 2. is the vertext between a common assignment? mountain/valley/border/...
+// 3. only if 2 is true, remove vertex
+
 const remove_collinear_vertices = function (graph, vertices) {
   const new_edges = [];
   vertices.forEach((vert) => {
@@ -16,9 +20,10 @@ const remove_collinear_vertices = function (graph, vertices) {
     new_edges.push({ vertices: [a, b], assignment, foldAngle });
   });
   new_edges.forEach((el) => {
-    graph.edges_vertices.push(el.vertices);
-    graph.edges_assignment.push(el.assignment);
-    graph.edges_foldAngle.push(el.foldAngle);
+    const index = graph.edges_vertices.length;
+    graph.edges_vertices[index] = el.vertices;
+    graph.edges_assignment[index] = el.assignment;
+    graph.edges_foldAngle[index] = el.foldAngle;
   });
   remove(graph, "vertices", vertices);
 };

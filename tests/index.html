@@ -9,9 +9,9 @@
 		<line fill="none" stroke="black" x1="94.1" y1="92.1" x2="6.7" y2="56"/>
 	</svg>
 </body>
-<script type="text/javascript" src="../foldify.js"></script>
+<script type="text/javascript" src="../tofold.js"></script>
 <script>
-const fold = foldify(document.querySelectorAll("svg")[0]);
+const fold = tofold(document.querySelectorAll("svg")[0]);
 const pre = document.createElement("pre");
 pre.innerHTML = `# vertices ${fold.vertices_coords.length}
 # edges ${fold.edges_vertices.length}

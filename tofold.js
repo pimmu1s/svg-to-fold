@@ -1,8 +1,12 @@
-/* (c) Robby Kraft, MIT License */
+/* convert images into FOLD file format.
+more info at https://github.com/robbykraft/tofold
+more info on the FOLD format https://github.com/edemaine/fold
+(c) Robby Kraft, MIT License */
+
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.foldify = factory());
+  (global.tofold = factory());
 }(this, (function () { 'use strict';
 
   function _typeof(obj) {
