@@ -9,13 +9,15 @@
 		<line fill="none" stroke="black" x1="94.1" y1="92.1" x2="6.7" y2="56"/>
 	</svg>
 </body>
+<script type="text/javascript" src="https://robbykraft.github.io/svg-segmentize/svg-segmentize.min.js"></script>
+<script type="text/javascript" src="https://edemaine.github.io/fold/dist/fold.js"></script>
 <script type="text/javascript" src="../tofold.js"></script>
 <script>
-const fold = tofold(document.querySelectorAll("svg")[0]);
+const foldObject = tofold(document.querySelectorAll("svg")[0]);
 const pre = document.createElement("pre");
-pre.innerHTML = `# vertices ${fold.vertices_coords.length}
-# edges ${fold.edges_vertices.length}
-# faces ${fold.faces_vertices.length}
-FOLD contents: ${JSON.stringify(fold, null, 2)}`;
+pre.innerHTML = `# vertices ${foldObject.vertices_coords.length}
+# edges ${foldObject.edges_vertices.length}
+# faces ${foldObject.faces_vertices.length}
+FOLD contents: ${JSON.stringify(foldObject, null, 2)}`;
 document.body.appendChild(pre);
 </script>
