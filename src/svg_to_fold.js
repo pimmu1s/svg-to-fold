@@ -1,8 +1,12 @@
-import Segmentize from "../include/svg-segmentize";
+// import Segmentize from "../include/svg-segmentize";
 import color_to_assignment from "./color_to_assignment";
 import fragment from "./graph/fragment";
-import convert from "../include/fold/convert";
+// import convert from "../include/fold/convert";
 // import remove_collinear_vertices from "./graph/collinear";
+import window from "./environment/window";
+
+const Segmentize = window.Segmentize || require("svg-segmentize");
+const FOLD = window.FOLD || require("fold");
 
 const assignment_foldAngle = {
   V: 180, v: 180, M: -180, m: -180
@@ -48,9 +52,9 @@ const svg_to_fold = function (svg, options) {
 
   const graph = fragment(pre_frag, options.epsilon);
   // remove_collinear_vertices(graph);
-  convert.edges_vertices_to_vertices_vertices_sorted(graph);
-  convert.vertices_vertices_to_faces_vertices(graph);
-  convert.faces_vertices_to_faces_edges(graph);
+  FOLD.convert.edges_vertices_to_vertices_vertices_sorted(graph);
+  FOLD.convert.vertices_vertices_to_faces_vertices(graph);
+  FOLD.convert.faces_vertices_to_faces_edges(graph);
   graph.edges_foldAngle = graph.edges_assignment.map(a => assignment_to_foldAngle(a));
 
   return graph;

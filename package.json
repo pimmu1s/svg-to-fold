@@ -1,6 +1,6 @@
 {
   "name": "tofold",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "convert images into the FOLD format",
   "main": "tofold.js",
   "scripts": {
@@ -10,6 +10,8 @@
   "repository": "https://github.com/robbykraft/tofold",
   "license": "ISC",
   "dependencies": {
+    "fold": "^0.10.4",
+    "svg-segmentize": "^0.1.3",
     "xmldom": "^0.1.27"
   },
   "devDependencies": {
