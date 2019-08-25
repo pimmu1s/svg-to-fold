@@ -659,6 +659,97 @@ more info on the FOLD format https://github.com/edemaine/fold
     return flat;
   };
 
+  var boundary_vertex_walk = function boundary_vertex_walk(_ref, startIndex, neighbor_index) {
+    var vertices_vertices = _ref.vertices_vertices;
+    var walk = [startIndex, neighbor_index];
+
+    while (walk[0] !== walk[walk.length - 1]) {
+      var next_v_v = vertices_vertices[walk[walk.length - 1]];
+      var next_i_v_v = next_v_v.indexOf(walk[walk.length - 2]);
+      var next_v = next_v_v[(next_i_v_v + 1) % next_v_v.length];
+      walk.push(next_v);
+    }
+
+    walk.pop();
+    return walk;
+  };
+
+  var magnitude = function magnitude(v) {
+    var sum = v.map(function (component) {
+      return component * component;
+    }).reduce(function (prev, curr) {
+      return prev + curr;
+    }, 0);
+    return Math.sqrt(sum);
+  };
+
+  var normalize = function normalize(v) {
+    var m = magnitude(v);
+    return m === 0 ? v : v.map(function (c) {
+      return c / m;
+    });
+  };
+
+  var make_vertex_pair_to_edge_map = function make_vertex_pair_to_edge_map(_ref2) {
+    var edges_vertices = _ref2.edges_vertices;
+    var map = {};
+    edges_vertices.map(function (ev) {
+      return ev.sort(function (a, b) {
+        return a - b;
+      }).join(" ");
+    }).forEach(function (key, i) {
+      map[key] = i;
+    });
+    return map;
+  };
+
+  var search_boundary = function search_boundary(graph) {
+    var startIndex = -1;
+    var smallestY = Infinity;
+
+    for (var i = 0; i < graph.vertices_coords.length; i += 1) {
+      if (graph.vertices_coords[i][1] < smallestY) {
+        smallestY = graph.vertices_coords[i][1];
+        startIndex = i;
+      }
+    }
+
+    if (startIndex === -1) {
+      return [];
+    }
+
+    var adjacent = graph.vertices_vertices[startIndex];
+    var adjacent_vectors = adjacent.map(function (a) {
+      return [graph.vertices_coords[a][0] - graph.vertices_coords[startIndex][0], graph.vertices_coords[a][1] - graph.vertices_coords[startIndex][1]];
+    });
+    var adjacent_dot_products = adjacent_vectors.map(function (v) {
+      return normalize(v);
+    }).map(function (v) {
+      return v[0];
+    });
+    var neighbor_index = -1;
+    var counter_max = -Infinity;
+
+    for (var _i = 0; _i < adjacent_dot_products.length; _i += 1) {
+      if (adjacent_dot_products[_i] > counter_max) {
+        neighbor_index = _i;
+        counter_max = adjacent_dot_products[_i];
+      }
+    }
+
+    var vertices = boundary_vertex_walk(graph, startIndex, adjacent[neighbor_index]);
+    var edgeMap = make_vertex_pair_to_edge_map(graph);
+    var vertices_pairs = vertices.map(function (_, i, arr) {
+      return [arr[i], arr[(i + 1) % arr.length]].sort(function (a, b) {
+        return a - b;
+      }).join(" ");
+    });
+    var edges = vertices_pairs.map(function (p) {
+      return edgeMap[p];
+    });
+    return edges;
+  };
+
   var Segmentize = win.Segmentize || require("svg-segmentize");
 
   var FOLD = win.FOLD || require("fold");
@@ -718,6 +809,9 @@ more info on the FOLD format https://github.com/edemaine/fold
     FOLD.convert.faces_vertices_to_faces_edges(graph);
     graph.edges_foldAngle = graph.edges_assignment.map(function (a) {
       return assignment_to_foldAngle(a);
+    });
+    search_boundary(graph).forEach(function (edgeIndex) {
+      graph.edges_assignment[edgeIndex] = "B";
     });
     return graph;
   };
