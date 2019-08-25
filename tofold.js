@@ -273,6 +273,22 @@ more info on the FOLD format https://github.com/edemaine/fold
 
   var EPSILON = 1e-6;
 
+  var magnitude = function magnitude(v) {
+    var sum = v.map(function (component) {
+      return component * component;
+    }).reduce(function (prev, curr) {
+      return prev + curr;
+    }, 0);
+    return Math.sqrt(sum);
+  };
+
+  var normalize = function normalize(v) {
+    var m = magnitude(v);
+    return m === 0 ? v : v.map(function (c) {
+      return c / m;
+    });
+  };
+
   var equivalent = function equivalent(a, b) {
     var epsilon = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : EPSILON;
 
@@ -335,6 +351,8 @@ more info on the FOLD format https://github.com/edemaine/fold
   var math = {
     core: {
       EPSILON: EPSILON,
+      magnitude: magnitude,
+      normalize: normalize,
       equivalent: equivalent,
       point_on_edge_exclusive: point_on_edge_exclusive,
       intersection: {
@@ -659,6 +677,19 @@ more info on the FOLD format https://github.com/edemaine/fold
     return flat;
   };
 
+  var make_vertex_pair_to_edge_map = function make_vertex_pair_to_edge_map(_ref) {
+    var edges_vertices = _ref.edges_vertices;
+    var map = {};
+    edges_vertices.map(function (ev) {
+      return ev.sort(function (a, b) {
+        return a - b;
+      }).join(" ");
+    }).forEach(function (key, i) {
+      map[key] = i;
+    });
+    return map;
+  };
+
   var boundary_vertex_walk = function boundary_vertex_walk(_ref, startIndex, neighbor_index) {
     var vertices_vertices = _ref.vertices_vertices;
     var walk = [startIndex, neighbor_index];
@@ -674,42 +705,15 @@ more info on the FOLD format https://github.com/edemaine/fold
     return walk;
   };
 
-  var magnitude = function magnitude(v) {
-    var sum = v.map(function (component) {
-      return component * component;
-    }).reduce(function (prev, curr) {
-      return prev + curr;
-    }, 0);
-    return Math.sqrt(sum);
-  };
-
-  var normalize = function normalize(v) {
-    var m = magnitude(v);
-    return m === 0 ? v : v.map(function (c) {
-      return c / m;
-    });
-  };
-
-  var make_vertex_pair_to_edge_map = function make_vertex_pair_to_edge_map(_ref2) {
-    var edges_vertices = _ref2.edges_vertices;
-    var map = {};
-    edges_vertices.map(function (ev) {
-      return ev.sort(function (a, b) {
-        return a - b;
-      }).join(" ");
-    }).forEach(function (key, i) {
-      map[key] = i;
-    });
-    return map;
-  };
-
   var search_boundary = function search_boundary(graph) {
-    var startIndex = -1;
-    var smallestY = Infinity;
+    if (graph.vertices_coords == null || graph.vertices_coords.length < 1) {
+      return [];
+    }
 
-    for (var i = 0; i < graph.vertices_coords.length; i += 1) {
-      if (graph.vertices_coords[i][1] < smallestY) {
-        smallestY = graph.vertices_coords[i][1];
+    var startIndex = 0;
+
+    for (var i = 1; i < graph.vertices_coords.length; i += 1) {
+      if (graph.vertices_coords[i][1] < graph.vertices_coords[startIndex][1]) {
         startIndex = i;
       }
     }
@@ -723,7 +727,7 @@ more info on the FOLD format https://github.com/edemaine/fold
       return [graph.vertices_coords[a][0] - graph.vertices_coords[startIndex][0], graph.vertices_coords[a][1] - graph.vertices_coords[startIndex][1]];
     });
     var adjacent_dot_products = adjacent_vectors.map(function (v) {
-      return normalize(v);
+      return math.core.normalize(v);
     }).map(function (v) {
       return v[0];
     });
@@ -810,9 +814,13 @@ more info on the FOLD format https://github.com/edemaine/fold
     graph.edges_foldAngle = graph.edges_assignment.map(function (a) {
       return assignment_to_foldAngle(a);
     });
-    search_boundary(graph).forEach(function (edgeIndex) {
-      graph.edges_assignment[edgeIndex] = "B";
-    });
+
+    if (options.boundary !== false) {
+      search_boundary(graph).forEach(function (edgeIndex) {
+        graph.edges_assignment[edgeIndex] = "B";
+      });
+    }
+
     return graph;
   };
 

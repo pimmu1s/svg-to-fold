@@ -25,7 +25,7 @@ test-03.svg
 - edges count: 16
   - mountain: 3
   - valley 4
-  - unassigned 9
+  - boundary 9
 
 test-04.svg
 
@@ -34,7 +34,7 @@ test-04.svg
 - edges count: 13
   - mountain: 3
   - valley 4
-  - unassigned 6
+  - buundary 6
 
 test-05.svg
 
@@ -44,3 +44,8 @@ test-05.svg
   - mountain: ?
   - valley ?
   - unassigned ?
+
+test-06.svg, test-07.svg
+
+- test overlap point not-quite aligning. artifact from hand-drawn svgs
+- test-07 raises the epsilon to merge vertices across the intended distance

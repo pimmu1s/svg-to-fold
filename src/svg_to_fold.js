@@ -5,8 +5,7 @@ import fragment from "./graph/fragment";
 // import convert from "../include/fold/convert";
 // import remove_collinear_vertices from "./graph/collinear";
 import window from "./environment/window";
-import walkBoundary from "./graph/boundary";
-import findBoundary from "./graph/boundary_search";
+import findBoundary from "./graph/boundary";
 
 const Segmentize = window.Segmentize || require("svg-segmentize");
 const FOLD = window.FOLD || require("fold");
@@ -64,7 +63,11 @@ const svg_to_fold = function (svg, options) {
   FOLD.convert.faces_vertices_to_faces_edges(graph);
   graph.edges_foldAngle = graph.edges_assignment.map(a => assignment_to_foldAngle(a));
   // graph.edges_assignment = walkBoundary(graph);
-  findBoundary(graph).forEach((edgeIndex) => { graph.edges_assignment[edgeIndex] = "B"; });
+  if (options.boundary !== false) {
+    findBoundary(graph).forEach((edgeIndex) => {
+      graph.edges_assignment[edgeIndex] = "B";
+    });
+  }
 
   return graph;
 };
